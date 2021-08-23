@@ -93,6 +93,20 @@ MoleculerEngine.prototype.step = function step (rs, ee, opts) {
     };
   }
 
+  if (rs.stop) {
+    return function stop (context, callback) {
+      context.runner.broker.stop()
+        .then(() => {
+          debug('Shutdown broker');
+          return callback(null, context);
+        })
+        .catch(error => {
+          debug(error);
+          return callback(error, context);
+        });
+    }
+  }
+
   return function (context, callback) {
     return callback(null, context);
   };
@@ -109,15 +123,6 @@ MoleculerEngine.prototype.compile = function compile (tasks, scenarioSpec, ee) {
 
       initialContext.runner = new Runner();
       initialContext.args = opts;
-      process.on('SIGINT', () => {
-        initialContext.runner.broker.stop()
-          .then(() => {
-            console.log('STOP broker');
-          })
-          .catch(error => {
-            console.error('ERROR STOP BROKER');
-          });
-      });
 
       ee.emit('started');
       return next(null, initialContext);
