@@ -11,7 +11,7 @@ const helpers = require('artillery/core/lib/engine_util');
 const { spawn } = require('child_process');
 const { Runner } = require('moleculer');
 const { countReset } = require('console');
-
+const os = require('os');
 function MoleculerEngine (script, ee) {
   this.script = script;
   this.ee = ee;
@@ -62,7 +62,6 @@ MoleculerEngine.prototype.step = function step (rs, ee, opts) {
     return function spawn (context, callback) {
       const opts = _.defaults(rs.options, context.args);
 
-      ee.emit('spawn');
       const startedAt = process.hrtime();
 
       const params = [];
@@ -72,22 +71,20 @@ MoleculerEngine.prototype.step = function step (rs, ee, opts) {
       }
 
       // Using uuid as node id to make sure we have unique id
-      process.env.NODEID = context.vars.$uuid;
+      const name = rs.spawn.name || os.hostname();
+      process.env.NODEID = `${name}-${_.uniqueId()}`;
+      context.vars.nodeId = process.env.NODEID;
       context.runner.start(['node', 'moleculer-runner', ...params])
         .then((broker) => {
-          // process.on('SIGINT', () => {
-          //   console.log('BROKER STOP');
-          //   broker.stop();
-          // });
-
           const endedAt = process.hrtime(startedAt);
           let delta = (endedAt[0] * 1e9) + endedAt[1];
-          ee.emit('response', delta, 0);
+          ee.emit('histogram', `spawn.response_time`, delta / 1e6);
 
           return callback(null, context);
         })
         .catch((error) => {
           debug(error);
+          ee.emit('error', `spawn - ${context.vars.nodeId}`);
           return callback(error, context);
         });
     };
@@ -95,14 +92,27 @@ MoleculerEngine.prototype.step = function step (rs, ee, opts) {
 
   if (rs.stop) {
     return function stop (context, callback) {
+      console.log(`Stop: ${context.vars.nodeId}`);
+      const startedAt = process.hrtime();
+      const stopTimer = setTimeout(() => {
+        callback(null, context);
+      }, 3000);
+
       context.runner.broker.stop()
         .then(() => {
-          debug('Shutdown broker');
+          const endedAt = process.hrtime(startedAt);
+          let delta = (endedAt[0] * 1e9) + endedAt[1];
+          ee.emit('histogram', `stop.response_time`, delta / 1e6);
+          console.log(`Stopped ${context.vars.nodeId}`);
           return callback(null, context);
         })
         .catch(error => {
-          debug(error);
+          ee.emit('error', `stop - ${context.vars.nodeId}`);
+          console.log(`Stopped error ${context.vars.nodeId}`);
           return callback(error, context);
+        })
+        .finally(() => {
+          clearTimeout(stopTimer);
         });
     }
   }
