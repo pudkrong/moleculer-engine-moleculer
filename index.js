@@ -11,8 +11,7 @@ const helpers = require('artillery/core/lib/engine_util');
 const { spawn } = require('child_process');
 const { Runner } = require('moleculer');
 const { countReset } = require('console');
-const engineUtil = require('./engine_util');
-const template = engineUtil.template;
+const template = helpers.template;
 const os = require('os');
 function MoleculerEngine (script, ee) {
   this.script = script;
