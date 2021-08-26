@@ -74,7 +74,8 @@ MoleculerEngine.prototype.step = function step (rs, ee, opts) {
 
       // Using uuid as node id to make sure we have unique id
       const name = template(rs.spawn.name, context) || os.hostname();
-      context.vars.nodeId = `${name}-${_.uniqueId()}`;
+      process.env.NODEID = `${name}-${_.uniqueId()}`;
+      context.vars.nodeId = process.env.NODEID;
       context.runner.start(['node', 'moleculer-runner', ...params])
         .then((broker) => {
           const endedAt = process.hrtime(startedAt);
