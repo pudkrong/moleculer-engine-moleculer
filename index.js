@@ -49,8 +49,9 @@ MoleculerEngine.prototype.step = function step (rs, ee, opts) {
   // }
 
   if (rs.log) {
-    return function log (context, callback) {
-      return process.nextTick(function () { callback(null, context); });
+    return function(context, callback) {
+      console.log(template(rs.log, context));
+      return process.nextTick(function() { callback(null, context); });
     };
   }
 
@@ -71,9 +72,8 @@ MoleculerEngine.prototype.step = function step (rs, ee, opts) {
       }
 
       // Using uuid as node id to make sure we have unique id
-      const name = rs.spawn.name || os.hostname();
-      process.env.NODEID = `${name}-${_.uniqueId()}`;
-      context.vars.nodeId = process.env.NODEID;
+      const name = template(rs.spawn.name, context) || os.hostname();
+      context.vars.nodeId = `${name}-${_.uniqueId()}`;
       context.runner.start(['node', 'moleculer-runner', ...params])
         .then((broker) => {
           const endedAt = process.hrtime(startedAt);
@@ -93,6 +93,7 @@ MoleculerEngine.prototype.step = function step (rs, ee, opts) {
   if (rs.stop) {
     return function stop (context, callback) {
       console.log(`Stop: ${context.vars.nodeId}`);
+
       const startedAt = process.hrtime();
       const stopTimer = setTimeout(() => {
         console.log(`Force Stop ${context.vars.nodeId}`);
