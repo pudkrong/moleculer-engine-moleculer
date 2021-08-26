@@ -95,7 +95,8 @@ MoleculerEngine.prototype.step = function step (rs, ee, opts) {
       console.log(`Stop: ${context.vars.nodeId}`);
       const startedAt = process.hrtime();
       const stopTimer = setTimeout(() => {
-        callback(null, context);
+        console.log(`Force Stop ${context.vars.nodeId}`);
+        return callback(null, context);
       }, 3000);
 
       context.runner.broker.stop()
