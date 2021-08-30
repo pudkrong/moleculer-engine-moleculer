@@ -27,7 +27,7 @@
     "debug": "^2.6.6",
     "ioredis": "^4.27.8",
     "lodash": "^4.17.13",
-    "moleculer": "file:../moleculer-pud",
+    "moleculer": "git+https://github.com:pudkrong/moleculer.git#hotfix-discovery",
     "moleculer-repl": "^0.6.6",
     "nats": "1.4.12"
   }
